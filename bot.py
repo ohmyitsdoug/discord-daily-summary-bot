@@ -1,7 +1,8 @@
 """Daily game leaderboard bot.
 
-Watches channels for pasted daily-game results, ranks them per game,
-answers /today, and posts a recap at midnight Pacific.
+Watches one chosen channel per server for pasted daily-game results,
+ranks them per game, answers slash commands, and posts a recap there
+at midnight Pacific.
 """
 import datetime as dt
 import os
@@ -63,6 +64,8 @@ def make_embed(channel_id: int, day: str, title: str, blocks=None):
 async def capture(msg: discord.Message, react: bool = True):
     if msg.author.bot or msg.guild is None:
         return
+    if db.get_channel(msg.guild.id) != msg.channel.id:
+        return
     results = parse(msg.channel.id, msg.content)
     if not results:
         return
@@ -77,25 +80,38 @@ async def capture(msg: discord.Message, react: bool = True):
         pass
 
 
-async def backfill_guild(guild: discord.Guild):
-    """Read today's messages (Pacific) in every channel the bot can see."""
+async def backfill_channel(ch) -> int:
+    """Read today's messages (Pacific) in the chosen channel and add any results."""
     start = dt.datetime.now(PACIFIC).replace(hour=0, minute=0, second=0, microsecond=0)
     total = 0
-    for ch in guild.text_channels:
-        perms = ch.permissions_for(guild.me)
-        if not (perms.view_channel and perms.read_message_history):
-            continue
-        try:
-            async for msg in ch.history(after=start, limit=1000, oldest_first=True):
-                total += await capture(msg, react=False) or 0
-        except discord.HTTPException:
-            pass
-    print(f"Backfilled {total} result(s) from today in {guild.name}")
+    try:
+        async for msg in ch.history(after=start, limit=1000, oldest_first=True):
+            total += await capture(msg, react=False) or 0
+    except discord.HTTPException:
+        pass
+    print(f"Backfilled {total} result(s) from today in #{ch.name} ({ch.guild.name})")
+    return total
+
+
+async def backfill_guild(guild: discord.Guild):
+    ch = guild.get_channel(db.get_channel(guild.id) or 0)
+    if ch:
+        await backfill_channel(ch)
+
+
+SETUP_HINT = ("👋 Thanks for adding Daily Game Score Summaries! A server manager can run "
+              "`/daily-games-summary set-channel` in the channel where people post their "
+              "daily game results. I'll only read and post in that one channel.")
 
 
 @client.event
 async def on_guild_join(guild):
-    await backfill_guild(guild)
+    ch = guild.system_channel
+    if ch and ch.permissions_for(guild.me).send_messages:
+        try:
+            await ch.send(SETUP_HINT)
+        except discord.HTTPException:
+            pass
 
 
 @client.event
@@ -110,43 +126,95 @@ async def on_message_edit(_before, after):
 
 # ---------- Slash commands ----------
 
-@summary.command(description="See today's standings for every game in this channel")
-@app_commands.describe(public="Post it for everyone instead of just you")
-async def today(inter: discord.Interaction, public: bool = False):
+async def in_game_channel(inter: discord.Interaction) -> bool:
+    """True if this is the server's chosen channel; otherwise tells the user where to go."""
+    chosen = db.get_channel(inter.guild_id) if inter.guild_id else None
+    if chosen == inter.channel_id:
+        return True
+    if chosen is None:
+        msg = ("I'm not set up yet. A server manager can run "
+               "`/daily-games-summary set-channel` in the games channel.")
+    else:
+        msg = f"Daily games are tracked in <#{chosen}>. Use the command there."
+    await inter.response.send_message(msg, ephemeral=True)
+    return False
+
+
+@summary.command(name="set-channel",
+                 description="Choose the channel I watch for results and post recaps in")
+@app_commands.describe(channel="Leave empty to use this channel")
+async def set_channel(inter: discord.Interaction, channel: discord.TextChannel = None):
+    if not inter.guild or not inter.permissions.manage_guild:
+        return await inter.response.send_message(
+            "Only people with **Manage Server** can choose the channel.", ephemeral=True)
+    channel = channel or inter.channel
+    perms = channel.permissions_for(inter.guild.me)
+    missing = [n for n, ok in [("View Channel", perms.view_channel),
+                               ("Read Message History", perms.read_message_history),
+                               ("Send Messages", perms.send_messages),
+                               ("Embed Links", perms.embed_links),
+                               ("Add Reactions", perms.add_reactions)] if not ok]
+    if missing:
+        return await inter.response.send_message(
+            f"I can't work in {channel.mention} yet. Give me these permissions there: "
+            + ", ".join(missing) + ".", ephemeral=True)
+    db.set_channel(inter.guild_id, channel.id)
+    await inter.response.send_message(
+        f"📊 Daily games are now tracked in {channel.mention}. I'll read results posted there "
+        "and post a recap every night at midnight Pacific.")
+    found = await backfill_channel(channel)
+    if found:
+        await inter.followup.send(f"Picked up {found} result(s) already posted today.")
+
+@summary.command(description="See today's standings for every game")
+@app_commands.describe(private="Only show it to you")
+async def today(inter: discord.Interaction, private: bool = False):
+    if not await in_game_channel(inter):
+        return
     day = pacific_day(discord.utils.utcnow())
     await inter.response.send_message(
         embed=make_embed(inter.channel_id, day, f"🏆 Today's leaderboard · {day}"),
-        ephemeral=not public)
+        ephemeral=private)
 
 
-@summary.command(description="See yesterday's final standings in this channel")
-async def yesterday(inter: discord.Interaction, public: bool = False):
-    day = (dt.datetime.now(PACIFIC).date() - dt.timedelta(days=1)).isoformat()
+@summary.command(description="See yesterday's final standings")
+@app_commands.describe(private="Only show it to you")
+async def yesterday(inter: discord.Interaction, private: bool = False):
+    if not await in_game_channel(inter):
+        return
+    day = days_ago(1)
     await inter.response.send_message(
         embed=make_embed(inter.channel_id, day, f"📜 Final results · {day}"),
-        ephemeral=not public)
+        ephemeral=private)
 
 
 @summary.command(description="See standings for any day in the past week")
-@app_commands.describe(days_ago="0 = today, 1 = yesterday … 6", public="Post it for everyone")
+@app_commands.describe(days_ago="0 = today, 1 = yesterday … 6", private="Only show it to you")
 async def day(inter: discord.Interaction, days_ago: app_commands.Range[int, 0, KEEP_DAYS - 1],
-              public: bool = False):
+              private: bool = False):
+    if not await in_game_channel(inter):
+        return
     d = globals()["days_ago"](days_ago)
     await inter.response.send_message(
-        embed=make_embed(inter.channel_id, d, f"📅 Leaderboard · {d}"), ephemeral=not public)
+        embed=make_embed(inter.channel_id, d, f"📅 Leaderboard · {d}"), ephemeral=private)
 
 
 @summary.command(description="This week's standings: daily wins and average score per game")
-async def week(inter: discord.Interaction, public: bool = False):
+@app_commands.describe(private="Only show it to you")
+async def week(inter: discord.Interaction, private: bool = False):
+    if not await in_game_channel(inter):
+        return
     start, end = days_ago(KEEP_DAYS - 1), days_ago(0)
     blocks = leaderboard.build_week(db.range_scores(inter.channel_id, start, end))
     await inter.response.send_message(
         embed=make_embed(inter.channel_id, end, f"🗓️ Last 7 days · {start} → {end}", blocks),
-        ephemeral=not public)
+        ephemeral=private)
 
 
 @summary.command(description="List the games this channel tracks")
 async def games(inter: discord.Interaction):
+    if not await in_game_channel(inter):
+        return
     custom = [g["name"] for g in db.custom_games(inter.channel_id)]
     text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle"
     if custom:
@@ -156,11 +224,15 @@ async def games(inter: discord.Interaction):
 
 @summary.command(description="Teach this channel a new game by pasting a shared result")
 async def addgame(inter: discord.Interaction):
+    if not await in_game_channel(inter):
+        return
     await inter.response.send_modal(AddGameModal())
 
 
 @summary.command(description="Remove a game you added to this channel")
 async def removegame(inter: discord.Interaction, name: str):
+    if not await in_game_channel(inter):
+        return
     game = next((g for g in db.custom_games(inter.channel_id)
                  if g["name"].lower() == name.lower()), None)
     if not game:
@@ -250,7 +322,10 @@ class MapView(discord.ui.View):
 async def midnight_recap():
     day = days_ago(1)
     db.prune(days_ago(KEEP_DAYS - 1))  # keep today + previous 6 days
+    watched = set(db.watched_channels())
     for channel_id in db.channels_with_scores(day):
+        if channel_id not in watched:
+            continue
         ch = client.get_channel(channel_id)
         if ch:
             try:

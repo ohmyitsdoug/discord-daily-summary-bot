@@ -7,7 +7,8 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 **Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
 
 ## Commands
-- `/daily-games-summary today` — today's standings for every game in this channel (only you see it; `public:True` to share)
+- `/daily-games-summary set-channel` — choose the one channel the bot watches and posts in (needs **Manage Server**; run it in that channel or pick one)
+- `/daily-games-summary today` — today's standings for every game (posted for everyone; `private:True` to see it alone)
 - `/daily-games-summary yesterday` — yesterday's final standings
 - `/daily-games-summary day days_ago:N` — standings for any day in the past week (0 = today … 6)
 - `/daily-games-summary week` — last 7 days per game: daily wins 🏆, average score, days played
@@ -15,13 +16,14 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 - `/daily-games-summary addgame` — paste a sample result, pick which number is the puzzle # and which is the score, choose higher/lower is better
 - `/daily-games-summary removegame name` — remove an added game (creator or moderator only)
 
-A recap of the previous day posts automatically at 12:00 AM Pacific in every channel that had scores.
+A recap of the previous day posts automatically at 12:00 AM Pacific in the chosen channel, if it had scores.
 
 ## How data stays separate
 Every score and every added game is stored with its channel ID, and every lookup filters by it. A game added in one channel only works in that channel.
 
 ## Rules
-- When the bot joins a server (and whenever it restarts), it reads back through today's messages in every channel it can see and adds any results it finds, without reacting to them.
+- The bot only reads and posts in the channel chosen with `set-channel`, one per server. Commands used anywhere else point people to that channel.
+- When a channel is chosen (and whenever the bot restarts), it reads back through today's messages in that channel and adds any results it finds, without reacting to them.
 - One message can hold several games; each one is captured.
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.

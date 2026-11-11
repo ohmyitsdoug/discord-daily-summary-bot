@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS scores (
     PRIMARY KEY (channel_id, game, puzzle, user_id)
 );
 CREATE INDEX IF NOT EXISTS idx_scores_day ON scores(channel_id, day);
+CREATE TABLE IF NOT EXISTS guild_settings (
+    guild_id    INTEGER PRIMARY KEY,
+    channel_id  INTEGER NOT NULL      -- the one channel the bot watches and posts in
+);
 CREATE TABLE IF NOT EXISTS custom_games (
     channel_id  INTEGER NOT NULL,
     name        TEXT    NOT NULL,
@@ -68,6 +72,19 @@ class DB:
     def channels_with_scores(self, day):
         return [r[0] for r in self.c.execute(
             "SELECT DISTINCT channel_id FROM scores WHERE day=?", (day,))]
+
+    # --- per-server settings ---
+    def get_channel(self, guild_id):
+        row = self.c.execute("SELECT channel_id FROM guild_settings WHERE guild_id=?",
+                             (guild_id,)).fetchone()
+        return row[0] if row else None
+
+    def set_channel(self, guild_id, channel_id):
+        self.c.execute("INSERT OR REPLACE INTO guild_settings VALUES (?,?)", (guild_id, channel_id))
+        self.c.commit()
+
+    def watched_channels(self):
+        return [r[0] for r in self.c.execute("SELECT channel_id FROM guild_settings")]
 
     # --- custom games ---
     def custom_games(self, channel_id):
