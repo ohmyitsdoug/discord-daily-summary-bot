@@ -7,7 +7,10 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 **Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
 
 ## Commands
-- `/dgs set-channel` — choose the one channel the bot watches and posts in (needs **Manage Server**; run it in that channel or pick one)
+- `/dgs set-channel` — choose the one channel where leaderboards and the nightly recap post (needs **Manage Server**). Results posted there count too.
+- `/dgs watch channel` — also read results from another channel, e.g. #wordle (needs **Manage Server**)
+- `/dgs unwatch channel` — stop reading a channel
+- `/dgs channels` — show where the bot reads and posts
 - `/dgs today` — today's standings for every game (posted for everyone; `private:True` to see it alone)
 - `/dgs yesterday` — yesterday's final standings
 - `/dgs day days_ago:N` — standings for any day in the past week (0 = today … 6)
@@ -19,11 +22,12 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 A recap of the previous day posts automatically at 12:00 AM Pacific in the chosen channel, if it had scores.
 
 ## How data stays separate
-Every score and every added game is stored with its channel ID, and every lookup filters by it. A game added in one channel only works in that channel.
+Every score and every added game is stored with its server ID, and every lookup filters by it. One server never sees another server's data.
 
 ## Rules
-- The bot only reads and posts in the channel chosen with `set-channel`, one per server. Commands used anywhere else point people to that channel.
-- When a channel is chosen (and whenever the bot restarts), it reads back through today's messages in that channel and adds any results it finds, without reacting to them.
+- Each server has one post channel (`set-channel`) and any number of channels it reads results from (`watch`). All of them feed one leaderboard for the server.
+- The bot only posts in the post channel. In watched channels it just adds a 📊 reaction to results it captures. Leaderboard commands used elsewhere point people to the post channel.
+- When a channel is chosen or watched (and whenever the bot restarts), it reads back through today's messages in it and adds any results it finds, without reacting to them.
 - One message can hold several games; each one is captured.
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.

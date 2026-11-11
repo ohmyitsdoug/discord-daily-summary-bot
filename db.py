@@ -1,4 +1,5 @@
-"""SQLite storage. Every query is scoped by channel_id, so channels never see each other's data."""
+"""SQLite storage. Scores and added games are scoped per server (the `channel_id`
+column holds the server ID), so servers never see each other's data."""
 import sqlite3
 
 SCHEMA = """
@@ -18,7 +19,12 @@ CREATE TABLE IF NOT EXISTS scores (
 CREATE INDEX IF NOT EXISTS idx_scores_day ON scores(channel_id, day);
 CREATE TABLE IF NOT EXISTS guild_settings (
     guild_id    INTEGER PRIMARY KEY,
-    channel_id  INTEGER NOT NULL      -- the one channel the bot watches and posts in
+    channel_id  INTEGER NOT NULL      -- the one channel the bot posts in
+);
+CREATE TABLE IF NOT EXISTS watch_channels (
+    guild_id    INTEGER NOT NULL,
+    channel_id  INTEGER NOT NULL,     -- extra channels the bot reads results from
+    PRIMARY KEY (guild_id, channel_id)
 );
 CREATE TABLE IF NOT EXISTS custom_games (
     channel_id  INTEGER NOT NULL,
@@ -83,8 +89,26 @@ class DB:
         self.c.execute("INSERT OR REPLACE INTO guild_settings VALUES (?,?)", (guild_id, channel_id))
         self.c.commit()
 
-    def watched_channels(self):
-        return [r[0] for r in self.c.execute("SELECT channel_id FROM guild_settings")]
+    def post_channels(self):
+        """[(guild_id, post_channel_id)] for every set-up server."""
+        return [tuple(r) for r in self.c.execute("SELECT guild_id, channel_id FROM guild_settings")]
+
+    def add_watch(self, guild_id, channel_id):
+        self.c.execute("INSERT OR IGNORE INTO watch_channels VALUES (?,?)", (guild_id, channel_id))
+        self.c.commit()
+
+    def remove_watch(self, guild_id, channel_id):
+        cur = self.c.execute("DELETE FROM watch_channels WHERE guild_id=? AND channel_id=?",
+                             (guild_id, channel_id))
+        self.c.commit()
+        return cur.rowcount
+
+    def read_channels(self, guild_id):
+        """Every channel the bot reads results from: the post channel plus watched ones."""
+        ids = [r[0] for r in self.c.execute(
+            "SELECT channel_id FROM watch_channels WHERE guild_id=?", (guild_id,))]
+        post = self.get_channel(guild_id)
+        return ([post] if post else []) + [i for i in ids if i != post]
 
     # --- custom games ---
     def custom_games(self, channel_id):
