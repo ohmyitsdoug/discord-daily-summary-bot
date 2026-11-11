@@ -60,7 +60,7 @@ def make_embed(channel_id: int, day: str, title: str, blocks=None):
 
 # ---------- Capturing scores ----------
 
-async def capture(msg: discord.Message):
+async def capture(msg: discord.Message, react: bool = True):
     if msg.author.bot or msg.guild is None:
         return
     results = parse(msg.channel.id, msg.content)
@@ -69,10 +69,33 @@ async def capture(msg: discord.Message):
     for r in results:
         db.save(msg.channel.id, r, msg.author.id, msg.author.display_name,
                 pacific_day(msg.created_at), msg.id)
+    if not react:
+        return len(results)
     try:
         await msg.add_reaction("📊")
     except discord.HTTPException:
         pass
+
+
+async def backfill_guild(guild: discord.Guild):
+    """Read today's messages (Pacific) in every channel the bot can see."""
+    start = dt.datetime.now(PACIFIC).replace(hour=0, minute=0, second=0, microsecond=0)
+    total = 0
+    for ch in guild.text_channels:
+        perms = ch.permissions_for(guild.me)
+        if not (perms.view_channel and perms.read_message_history):
+            continue
+        try:
+            async for msg in ch.history(after=start, limit=1000, oldest_first=True):
+                total += await capture(msg, react=False) or 0
+        except discord.HTTPException:
+            pass
+    print(f"Backfilled {total} result(s) from today in {guild.name}")
+
+
+@client.event
+async def on_guild_join(guild):
+    await backfill_guild(guild)
 
 
 @client.event
@@ -243,6 +266,8 @@ async def on_ready():
     await tree.sync()
     if not midnight_recap.is_running():
         midnight_recap.start()
+    for guild in client.guilds:
+        await backfill_guild(guild)
     print(f"Logged in as {client.user}")
 
 

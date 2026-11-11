@@ -21,6 +21,7 @@ A recap of the previous day posts automatically at 12:00 AM Pacific in every cha
 Every score and every added game is stored with its channel ID, and every lookup filters by it. A game added in one channel only works in that channel.
 
 ## Rules
+- When the bot joins a server (and whenever it restarts), it reads back through today's messages in every channel it can see and adds any results it finds, without reacting to them.
 - One message can hold several games; each one is captured.
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.
