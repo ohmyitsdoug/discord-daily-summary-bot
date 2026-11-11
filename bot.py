@@ -16,7 +16,12 @@ import parsers
 from db import DB
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
-TOKEN = os.environ["DISCORD_TOKEN"]
+TOKEN = os.environ["DISCORD_TOKEN"].strip().strip('"\'').strip()
+if TOKEN.lower().startswith("bot "):
+    TOKEN = TOKEN[4:].strip()
+if TOKEN.count(".") != 2:
+    print(f"DISCORD_TOKEN looks wrong: expected 3 dot-separated parts, got {TOKEN.count('.') + 1} "
+          f"(length {len(TOKEN)}). Use the token from the Bot tab, not the Client Secret or Application ID.")
 
 intents = discord.Intents.default()
 intents.message_content = True  # also enable in Developer Portal → Bot
