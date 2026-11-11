@@ -7,14 +7,14 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 **Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
 
 ## Commands
-- `/daily-games-summary set-channel` — choose the one channel the bot watches and posts in (needs **Manage Server**; run it in that channel or pick one)
-- `/daily-games-summary today` — today's standings for every game (posted for everyone; `private:True` to see it alone)
-- `/daily-games-summary yesterday` — yesterday's final standings
-- `/daily-games-summary day days_ago:N` — standings for any day in the past week (0 = today … 6)
-- `/daily-games-summary week` — last 7 days per game: daily wins 🏆, average score, days played
-- `/daily-games-summary games` — list the games this channel tracks
-- `/daily-games-summary addgame` — paste a sample result, pick which number is the puzzle # and which is the score, choose higher/lower is better
-- `/daily-games-summary removegame name` — remove an added game (creator or moderator only)
+- `/dgs set-channel` — choose the one channel the bot watches and posts in (needs **Manage Server**; run it in that channel or pick one)
+- `/dgs today` — today's standings for every game (posted for everyone; `private:True` to see it alone)
+- `/dgs yesterday` — yesterday's final standings
+- `/dgs day days_ago:N` — standings for any day in the past week (0 = today … 6)
+- `/dgs week` — last 7 days per game: daily wins 🏆, average score, days played
+- `/dgs games` — list the games this channel tracks
+- `/dgs addgame` — paste a sample result, pick which number is the puzzle # and which is the score, choose higher/lower is better
+- `/dgs removegame name` — remove an added game (creator or moderator only)
 
 A recap of the previous day posts automatically at 12:00 AM Pacific in the chosen channel, if it had scores.
 

@@ -28,7 +28,7 @@ intents = discord.Intents.default()
 intents.message_content = True  # also enable in Developer Portal → Bot
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
-summary = app_commands.Group(name="daily-games-summary",
+summary = app_commands.Group(name="dgs",
                              description="Daily game leaderboards for this channel")
 db = DB(os.environ.get("DB_PATH", "scores.db"))
 
@@ -100,7 +100,7 @@ async def backfill_guild(guild: discord.Guild):
 
 
 SETUP_HINT = ("👋 Thanks for adding Daily Game Score Summaries! A server manager can run "
-              "`/daily-games-summary set-channel` in the channel where people post their "
+              "`/dgs set-channel` in the channel where people post their "
               "daily game results. I'll only read and post in that one channel.")
 
 
@@ -133,7 +133,7 @@ async def in_game_channel(inter: discord.Interaction) -> bool:
         return True
     if chosen is None:
         msg = ("I'm not set up yet. A server manager can run "
-               "`/daily-games-summary set-channel` in the games channel.")
+               "`/dgs set-channel` in the games channel.")
     else:
         msg = f"Daily games are tracked in <#{chosen}>. Use the command there."
     await inter.response.send_message(msg, ephemeral=True)
@@ -312,7 +312,7 @@ class MapView(discord.ui.View):
         self.stop()
         await inter.response.edit_message(
             content=f"✅ **{self.name}** added to this channel. Your sample reads as "
-                    f"score **{test.display}**. New pastes will show up in /daily-games-summary today.",
+                    f"score **{test.display}**. New pastes will show up in /dgs today.",
             view=None)
 
 
@@ -336,7 +336,7 @@ async def midnight_recap():
 
 @client.event
 async def on_ready():
-    if not tree.get_command("daily-games-summary"):
+    if not tree.get_command("dgs"):
         tree.add_command(summary)
     await tree.sync()
     if not midnight_recap.is_running():
