@@ -1,4 +1,5 @@
 """Share-text parsers. Each returns a Result or None."""
+import datetime as _dt
 import re
 from dataclasses import dataclass
 from typing import Optional
@@ -127,3 +128,32 @@ def parse_custom(text: str, game: dict):
     if game["puzzle_idx"] is not None:
         puzzle = int(float(nums[game["puzzle_idx"]].replace(",", "")))
     return Result(game["name"], puzzle, score, score_s, bool(game["higher_is_better"]))
+
+
+# ---------- Official Wordle Discord app ----------
+# Its game cards are images we can't read, but each day it posts a text summary like:
+#   "Your group is on a 469 day streak! ... Here are yesterday's results:
+#    👑 2/6: <@111> <@222>  3/6: <@333>  X/6: <@444>"
+
+WORDLE_DAY0 = _dt.date(2021, 6, 19)  # Wordle #0
+
+
+def wordle_number(day: _dt.date) -> int:
+    return (day - WORDLE_DAY0).days
+
+
+SUMMARY_RE = re.compile(r"yesterday'?s results", re.I)
+GROUP_RE = re.compile(r"([1-6X])\s*/\s*6\s*:\s*((?:<@!?\d+>[\s,]*)+)", re.I)
+MENTION_RE = re.compile(r"<@!?(\d+)>")
+
+
+def parse_wordle_app_summary(text: str):
+    """[(guesses '1'-'6' or 'X', [user_ids])] from the Wordle app's daily summary, else []."""
+    if not SUMMARY_RE.search(text or ""):
+        return []
+    return [(m[1].upper(), [int(u) for u in MENTION_RE.findall(m[2])])
+            for m in GROUP_RE.finditer(text)]
+
+
+def wordle_result(guesses: str, puzzle: int) -> Result:
+    return Result("Wordle", puzzle, 7 if guesses == "X" else int(guesses), f"{guesses}/6", False)

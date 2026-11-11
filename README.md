@@ -25,6 +25,7 @@ A recap of the previous day posts automatically at 12:00 AM Pacific in the chose
 Every score and every added game is stored with its server ID, and every lookup filters by it. One server never sees another server's data.
 
 ## Rules
+- **Wordle Discord app:** its game cards are images and can't be read, but its daily "Here are yesterday's results" message is. Those scores are added to the previous day.
 - Each server has one post channel (`set-channel`) and any number of channels it reads results from (`watch`). All of them feed one leaderboard for the server.
 - The bot only posts in the post channel. In watched channels it just adds a 📊 reaction to results it captures. Leaderboard commands used elsewhere point people to the post channel.
 - When a channel is chosen or watched (and whenever the bot restarts), it reads back through today's messages in it and adds any results it finds, without reacting to them.
