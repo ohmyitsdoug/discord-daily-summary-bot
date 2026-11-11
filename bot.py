@@ -71,41 +71,11 @@ def make_embed(guild_id: int, day: str, title: str, blocks=None):
 
 # ---------- Capturing scores ----------
 
-def is_wordle_app(author) -> bool:
-    return author.bot and author.name.lower() == "wordle"
-
-
-async def capture_wordle_app(msg: discord.Message, react: bool) -> int:
-    """Scores from the Wordle app's daily 'yesterday's results' summary."""
-    groups = parsers.parse_wordle_app_summary(msg.content)
-    if not groups:
-        return 0
-    day = (msg.created_at.astimezone(PACIFIC).date() - dt.timedelta(days=1))
-    puzzle = parsers.wordle_number(day)
-    names = {u.id: u for u in msg.mentions}
-    count = 0
-    for guesses, user_ids in groups:
-        r = parsers.wordle_result(guesses, puzzle)
-        for uid in user_ids:
-            member = msg.guild.get_member(uid) or names.get(uid)
-            name = getattr(member, "display_name", None) or f"user {uid}"
-            db.save(msg.guild.id, r, uid, name, day.isoformat(), msg.id)
-            count += 1
-    if react and count:
-        try:
-            await msg.add_reaction("📊")
-        except discord.HTTPException:
-            pass
-    return count
-
-
 async def capture(msg: discord.Message, react: bool = True):
     if msg.guild is None:
         return
     if msg.channel.id not in db.read_channels(msg.guild.id):
         return
-    if is_wordle_app(msg.author):
-        return await capture_wordle_app(msg, react)
     if msg.author.bot:
         return
     results = parse(msg.guild.id, msg.content)
@@ -321,7 +291,7 @@ async def games(inter: discord.Interaction):
     if not await in_game_channel(inter):
         return
     custom = [g["name"] for g in db.custom_games(inter.guild_id)]
-    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle"
+    text = "**Built in:** Krillion, Alphablitz, Daily Banana"
     if custom:
         text += "\n**Added here:** " + ", ".join(custom)
     await inter.response.send_message(text, ephemeral=True)

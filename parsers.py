@@ -1,5 +1,4 @@
 """Share-text parsers. Each returns a Result or None."""
-import datetime as _dt
 import re
 from dataclasses import dataclass
 from typing import Optional
@@ -44,15 +43,8 @@ def parse_daily_banana(t: str):
         return Result("Daily Banana", int(m[1]), s, f"{s}/{_n(m[3])}", True)
 
 
-def parse_wordle(t: str):
-    m = re.search(r"Wordle\s+([\d,]+)\s+([1-6X])/6", t, re.I)
-    if m:
-        g = m[2].upper()
-        return Result("Wordle", _n(m[1]), 7 if g == "X" else int(g), f"{g}/6", False)
-
-
-BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana, parse_wordle]
-BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana", "wordle"}
+BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana]
+BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana"}
 
 
 def parse_builtin(text: str):
@@ -64,8 +56,7 @@ def parse_builtin(text: str):
 
 # Line starts that begin a built-in game's result, used to split a message
 # that contains several games into one chunk per game.
-BUILTIN_HEADER = (r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
-                  r"|Wordle\s+[\d,]+\s+[1-6X]/6")
+BUILTIN_HEADER = r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
 
 
 def parse_all(text: str, custom_games=()):
@@ -129,31 +120,3 @@ def parse_custom(text: str, game: dict):
         puzzle = int(float(nums[game["puzzle_idx"]].replace(",", "")))
     return Result(game["name"], puzzle, score, score_s, bool(game["higher_is_better"]))
 
-
-# ---------- Official Wordle Discord app ----------
-# Its game cards are images we can't read, but each day it posts a text summary like:
-#   "Your group is on a 469 day streak! ... Here are yesterday's results:
-#    👑 2/6: <@111> <@222>  3/6: <@333>  X/6: <@444>"
-
-WORDLE_DAY0 = _dt.date(2021, 6, 19)  # Wordle #0
-
-
-def wordle_number(day: _dt.date) -> int:
-    return (day - WORDLE_DAY0).days
-
-
-SUMMARY_RE = re.compile(r"yesterday'?s results", re.I)
-GROUP_RE = re.compile(r"([1-6X])\s*/\s*6\s*:\s*((?:<@!?\d+>[\s,]*)+)", re.I)
-MENTION_RE = re.compile(r"<@!?(\d+)>")
-
-
-def parse_wordle_app_summary(text: str):
-    """[(guesses '1'-'6' or 'X', [user_ids])] from the Wordle app's daily summary, else []."""
-    if not SUMMARY_RE.search(text or ""):
-        return []
-    return [(m[1].upper(), [int(u) for u in MENTION_RE.findall(m[2])])
-            for m in GROUP_RE.finditer(text)]
-
-
-def wordle_result(guesses: str, puzzle: int) -> Result:
-    return Result("Wordle", puzzle, 7 if guesses == "X" else int(guesses), f"{guesses}/6", False)
