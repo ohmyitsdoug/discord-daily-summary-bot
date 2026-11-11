@@ -72,11 +72,9 @@ def make_embed(guild_id: int, day: str, title: str, blocks=None):
 # ---------- Capturing scores ----------
 
 async def capture(msg: discord.Message, react: bool = True):
-    if msg.guild is None:
+    if msg.author.bot or msg.guild is None:
         return
     if msg.channel.id not in db.read_channels(msg.guild.id):
-        return
-    if msg.author.bot:
         return
     results = parse(msg.guild.id, msg.content)
     if not results:
@@ -291,7 +289,7 @@ async def games(inter: discord.Interaction):
     if not await in_game_channel(inter):
         return
     custom = [g["name"] for g in db.custom_games(inter.guild_id)]
-    text = "**Built in:** Krillion, Alphablitz, Daily Banana"
+    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle"
     if custom:
         text += "\n**Added here:** " + ", ".join(custom)
     await inter.response.send_message(text, ephemeral=True)

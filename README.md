@@ -4,11 +4,11 @@
 
 Reads pasted daily-game results in a channel and keeps a per-game leaderboard for each channel.
 
-**Built-in games:** Krillion, Alphablitz, Daily Banana
+**Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
 
 ## Commands
 - `/dgs set-channel` — choose the one channel where leaderboards and the nightly recap post (needs **Manage Server**). Results posted there count too.
-- `/dgs watch channel` — also read results from another channel, e.g. #gaming (needs **Manage Server**)
+- `/dgs watch channel` — also read results from another channel, e.g. #wordle (needs **Manage Server**)
 - `/dgs unwatch channel` — stop reading a channel
 - `/dgs channels` — show where the bot reads and posts
 - `/dgs today` — today's standings for every game (posted for everyone; `private:True` to see it alone)
@@ -32,7 +32,7 @@ Every score and every added game is stored with its server ID, and every lookup 
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.
 - A day is the Pacific date of the first post.
-- Ties share a rank.
+- Ties share a rank. Wordle X/6 ranks below 6/6.
 - The bot reacts 📊 to posts it captured.
 
 ## Setup

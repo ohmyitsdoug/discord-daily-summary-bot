@@ -43,8 +43,15 @@ def parse_daily_banana(t: str):
         return Result("Daily Banana", int(m[1]), s, f"{s}/{_n(m[3])}", True)
 
 
-BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana]
-BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana"}
+def parse_wordle(t: str):
+    m = re.search(r"Wordle\s+([\d,]+)\s+([1-6X])/6", t, re.I)
+    if m:
+        g = m[2].upper()
+        return Result("Wordle", _n(m[1]), 7 if g == "X" else int(g), f"{g}/6", False)
+
+
+BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana, parse_wordle]
+BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana", "wordle"}
 
 
 def parse_builtin(text: str):
@@ -56,7 +63,8 @@ def parse_builtin(text: str):
 
 # Line starts that begin a built-in game's result, used to split a message
 # that contains several games into one chunk per game.
-BUILTIN_HEADER = r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
+BUILTIN_HEADER = (r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
+                  r"|Wordle\s+[\d,]+\s+[1-6X]/6")
 
 
 def parse_all(text: str, custom_games=()):
@@ -119,4 +127,3 @@ def parse_custom(text: str, game: dict):
     if game["puzzle_idx"] is not None:
         puzzle = int(float(nums[game["puzzle_idx"]].replace(",", "")))
     return Result(game["name"], puzzle, score, score_s, bool(game["higher_is_better"]))
-
