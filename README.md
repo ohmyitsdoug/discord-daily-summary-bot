@@ -5,13 +5,13 @@ Reads pasted daily-game results in a channel and keeps a per-game leaderboard fo
 **Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
 
 ## Commands
-- `/today` — today's standings for every game in this channel (only you see it; `public:True` to share)
-- `/yesterday` — yesterday's final standings
-- `/day days_ago:N` — standings for any day in the past week (0 = today … 6)
-- `/week` — last 7 days per game: daily wins 🏆, average score, days played
-- `/games` — list the games this channel tracks
-- `/addgame` — paste a sample result, pick which number is the puzzle # and which is the score, choose higher/lower is better
-- `/removegame name` — remove an added game (creator or moderator only)
+- `/daily-games-summary today` — today's standings for every game in this channel (only you see it; `public:True` to share)
+- `/daily-games-summary yesterday` — yesterday's final standings
+- `/daily-games-summary day days_ago:N` — standings for any day in the past week (0 = today … 6)
+- `/daily-games-summary week` — last 7 days per game: daily wins 🏆, average score, days played
+- `/daily-games-summary games` — list the games this channel tracks
+- `/daily-games-summary addgame` — paste a sample result, pick which number is the puzzle # and which is the score, choose higher/lower is better
+- `/daily-games-summary removegame name` — remove an added game (creator or moderator only)
 
 A recap of the previous day posts automatically at 12:00 AM Pacific in every channel that had scores.
 

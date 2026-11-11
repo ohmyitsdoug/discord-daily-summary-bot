@@ -22,6 +22,8 @@ intents = discord.Intents.default()
 intents.message_content = True  # also enable in Developer Portal → Bot
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+summary = app_commands.Group(name="daily-games-summary",
+                             description="Daily game leaderboards for this channel")
 db = DB(os.environ.get("DB_PATH", "scores.db"))
 
 
@@ -85,7 +87,7 @@ async def on_message_edit(_before, after):
 
 # ---------- Slash commands ----------
 
-@tree.command(description="See today's standings for every game in this channel")
+@summary.command(description="See today's standings for every game in this channel")
 @app_commands.describe(public="Post it for everyone instead of just you")
 async def today(inter: discord.Interaction, public: bool = False):
     day = pacific_day(discord.utils.utcnow())
@@ -94,7 +96,7 @@ async def today(inter: discord.Interaction, public: bool = False):
         ephemeral=not public)
 
 
-@tree.command(description="See yesterday's final standings in this channel")
+@summary.command(description="See yesterday's final standings in this channel")
 async def yesterday(inter: discord.Interaction, public: bool = False):
     day = (dt.datetime.now(PACIFIC).date() - dt.timedelta(days=1)).isoformat()
     await inter.response.send_message(
@@ -102,7 +104,7 @@ async def yesterday(inter: discord.Interaction, public: bool = False):
         ephemeral=not public)
 
 
-@tree.command(description="See standings for any day in the past week")
+@summary.command(description="See standings for any day in the past week")
 @app_commands.describe(days_ago="0 = today, 1 = yesterday … 6", public="Post it for everyone")
 async def day(inter: discord.Interaction, days_ago: app_commands.Range[int, 0, KEEP_DAYS - 1],
               public: bool = False):
@@ -111,7 +113,7 @@ async def day(inter: discord.Interaction, days_ago: app_commands.Range[int, 0, K
         embed=make_embed(inter.channel_id, d, f"📅 Leaderboard · {d}"), ephemeral=not public)
 
 
-@tree.command(description="This week's standings: daily wins and average score per game")
+@summary.command(description="This week's standings: daily wins and average score per game")
 async def week(inter: discord.Interaction, public: bool = False):
     start, end = days_ago(KEEP_DAYS - 1), days_ago(0)
     blocks = leaderboard.build_week(db.range_scores(inter.channel_id, start, end))
@@ -120,7 +122,7 @@ async def week(inter: discord.Interaction, public: bool = False):
         ephemeral=not public)
 
 
-@tree.command(description="List the games this channel tracks")
+@summary.command(description="List the games this channel tracks")
 async def games(inter: discord.Interaction):
     custom = [g["name"] for g in db.custom_games(inter.channel_id)]
     text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle"
@@ -129,12 +131,12 @@ async def games(inter: discord.Interaction):
     await inter.response.send_message(text, ephemeral=True)
 
 
-@tree.command(description="Teach this channel a new game by pasting a shared result")
+@summary.command(description="Teach this channel a new game by pasting a shared result")
 async def addgame(inter: discord.Interaction):
     await inter.response.send_modal(AddGameModal())
 
 
-@tree.command(description="Remove a game you added to this channel")
+@summary.command(description="Remove a game you added to this channel")
 async def removegame(inter: discord.Interaction, name: str):
     game = next((g for g in db.custom_games(inter.channel_id)
                  if g["name"].lower() == name.lower()), None)
@@ -215,7 +217,7 @@ class MapView(discord.ui.View):
         self.stop()
         await inter.response.edit_message(
             content=f"✅ **{self.name}** added to this channel. Your sample reads as "
-                    f"score **{test.display}**. New pastes will show up in /today.",
+                    f"score **{test.display}**. New pastes will show up in /daily-games-summary today.",
             view=None)
 
 
@@ -236,6 +238,8 @@ async def midnight_recap():
 
 @client.event
 async def on_ready():
+    if not tree.get_command("daily-games-summary"):
+        tree.add_command(summary)
     await tree.sync()
     if not midnight_recap.is_running():
         midnight_recap.start()
