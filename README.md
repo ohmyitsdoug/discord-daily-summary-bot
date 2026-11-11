@@ -1,5 +1,7 @@
 # Discord Daily Summary Bot
 
+**[Add to Discord](https://discord.com/oauth2/authorize?client_id=1570160234176184440&permissions=85056&integration_type=0&scope=bot)**
+
 Reads pasted daily-game results in a channel and keeps a per-game leaderboard for each channel.
 
 **Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
@@ -19,6 +21,7 @@ A recap of the previous day posts automatically at 12:00 AM Pacific in every cha
 Every score and every added game is stored with its channel ID, and every lookup filters by it. A game added in one channel only works in that channel.
 
 ## Rules
+- One message can hold several games; each one is captured.
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.
 - A day is the Pacific date of the first post.

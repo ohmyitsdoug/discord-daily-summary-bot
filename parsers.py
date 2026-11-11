@@ -61,6 +61,35 @@ def parse_builtin(text: str):
             return r
 
 
+# Line starts that begin a built-in game's result, used to split a message
+# that contains several games into one chunk per game.
+BUILTIN_HEADER = (r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
+                  r"|Wordle\s+[\d,]+\s+[1-6X]/6")
+
+
+def parse_all(text: str, custom_games=()):
+    """Every game result in a message, one per game (first wins)."""
+    alts = [BUILTIN_HEADER] + [re.escape(g["prefix"]) for g in custom_games if g.get("prefix")]
+    header = re.compile(r"^[ \t]*(?:" + "|".join(alts) + ")", re.I | re.M)
+    starts = [m.start() for m in header.finditer(text)] or [0]
+    starts[0] = 0 if not text[:starts[0]].strip() else starts[0]
+    chunks = [text[a:b] for a, b in zip(starts, starts[1:] + [len(text)])]
+
+    results, seen = [], set()
+    for chunk in chunks:
+        chunk = chunk.strip()
+        r = parse_builtin(chunk)
+        if not r:
+            for g in custom_games:
+                r = parse_custom(chunk, g)
+                if r:
+                    break
+        if r and r.game not in seen:
+            seen.add(r.game)
+            results.append(r)
+    return results
+
+
 # ---------- Player-added games ----------
 # A custom game is: a name, a "prefix" (the text its share starts with),
 # which number in the paste is the puzzle #, which is the score, and sort direction.

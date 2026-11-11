@@ -37,13 +37,7 @@ def pacific_day(when: dt.datetime) -> str:
 
 
 def parse(channel_id: int, text: str):
-    r = parsers.parse_builtin(text)
-    if r:
-        return r
-    for g in db.custom_games(channel_id):
-        r = parsers.parse_custom(text, g)
-        if r:
-            return r
+    return parsers.parse_all(text, db.custom_games(channel_id))
 
 
 KEEP_DAYS = 7
@@ -69,11 +63,12 @@ def make_embed(channel_id: int, day: str, title: str, blocks=None):
 async def capture(msg: discord.Message):
     if msg.author.bot or msg.guild is None:
         return
-    r = parse(msg.channel.id, msg.content)
-    if not r:
+    results = parse(msg.channel.id, msg.content)
+    if not results:
         return
-    db.save(msg.channel.id, r, msg.author.id, msg.author.display_name,
-            pacific_day(msg.created_at), msg.id)
+    for r in results:
+        db.save(msg.channel.id, r, msg.author.id, msg.author.display_name,
+                pacific_day(msg.created_at), msg.id)
     try:
         await msg.add_reaction("📊")
     except discord.HTTPException:
