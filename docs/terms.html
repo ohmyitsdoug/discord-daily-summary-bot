@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terms of Service · Daily Games Bot</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bayon&family=Rubik:wght@400;500;600&display=swap">
+<style>
+/* Single reading column, Smidgen brand: purple ground for headings, orange eyebrows */
+:root{
+  --bg:#fbf9fc; --fg:#241a29; --muted:#5f5466; --line:#e4dbe8;
+  --purple:#753189; --orange:#EA5D00; --chip-fg:#fff;
+  --display:"Bayon","Impact",sans-serif; --body:"Rubik",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17121a; --fg:#efe8f2; --muted:#b3a7b9; --line:#352b3a; --purple:#c58bd8; --orange:#ff7a26; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17121a; --fg:#efe8f2; --muted:#b3a7b9; --line:#352b3a; --purple:#c58bd8; --orange:#ff7a26; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+header{display:flex;flex-direction:column;gap:12px}
+h1{font:400 clamp(2.4rem,7vw,3.4rem)/1 var(--display);color:var(--purple);margin:0;letter-spacing:.01em;text-wrap:balance}
+.meta{color:var(--muted);margin:0}
+nav{display:flex;flex-wrap:wrap;gap:10px}
+nav a{background:var(--purple);color:var(--bg);text-decoration:none;padding:6px 14px;border-radius:999px;font-weight:500}
+nav a:focus-visible,a:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+section{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--line);padding-top:28px;scroll-margin-top:16px}
+.eyebrow{font:600 .78rem/1 var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--orange)}
+h2{font:400 2.1rem/1.1 var(--display);color:var(--purple);margin:0 0 8px}
+h3{font:600 1.05rem/1.3 var(--body);margin:20px 0 2px}
+p,li{margin:0;color:var(--fg)}
+ul{margin:4px 0 0;padding-left:1.25em;display:flex;flex-direction:column;gap:4px}
+a{color:var(--purple)}
+footer{color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Daily Games Bot</h1>
+  <p class="meta">Effective November 11, 2026 · Operated by Smidgen Games LLC</p>
+  <nav><a href="privacy.html">Privacy Policy</a></nav>
+</header>
+<section id="terms">
+  <span class="eyebrow">Terms of Service</span>
+  <h2>Using Daily Games Bot</h2>
+  <p>By adding the bot to a server or using its commands, you agree to these terms.</p>
+
+  <h3>The service</h3>
+  <p>The bot is a free, just-for-fun tool provided by Smidgen Games LLC. It is provided “as is,” without warranties of any kind. Scores may be misread, missed, or lost, and the bot may be unavailable, changed, or shut down at any time.</p>
+
+  <h3>Acceptable use</h3>
+  <ul>
+    <li>Follow Discord's <a href="https://discord.com/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://discord.com/guidelines" target="_blank" rel="noopener">Community Guidelines</a>.</li>
+    <li>Don't use <code>/addgame</code> to add offensive names or content, spam the bot, or try to break, overload, or misuse it.</li>
+    <li>We may block any server or user from the bot for misuse.</li>
+  </ul>
+
+  <h3>Third-party games</h3>
+  <p>Games tracked by the bot belong to their own creators. The bot only reads results players choose to share, and it isn't affiliated with or endorsed by those games unless stated.</p>
+
+  <h3>Limitation of liability</h3>
+  <p>To the extent allowed by law, Smidgen Games LLC is not liable for any damages arising from use of the bot, including lost data or scores.</p>
+
+  <h3>Governing law</h3>
+  <p>These terms are governed by the laws of the State of Maryland, USA.</p>
+
+  <h3>Changes</h3>
+  <p>We may update these terms. Continuing to use the bot after a change means you accept the updated terms.</p>
+</section>
+<footer>Questions? Reach Smidgen Games LLC at <a href="https://playsmidgen.com" target="_blank" rel="noopener">playsmidgen.com</a>.</footer>
+</div>
+</body>
+</html>

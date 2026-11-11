@@ -1,0 +1,13 @@
+# Discord bot: no web service, one always-on machine, SQLite on a volume.
+app = "smidgen-daily-games-bot"   # must be unique on Fly; change if taken
+primary_region = "iad"
+
+[build]
+
+[mounts]
+  source = "bot_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

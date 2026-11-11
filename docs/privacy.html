@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · Daily Games Bot</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bayon&family=Rubik:wght@400;500;600&display=swap">
+<style>
+/* Single reading column, Smidgen brand: purple ground for headings, orange eyebrows */
+:root{
+  --bg:#fbf9fc; --fg:#241a29; --muted:#5f5466; --line:#e4dbe8;
+  --purple:#753189; --orange:#EA5D00; --chip-fg:#fff;
+  --display:"Bayon","Impact",sans-serif; --body:"Rubik",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17121a; --fg:#efe8f2; --muted:#b3a7b9; --line:#352b3a; --purple:#c58bd8; --orange:#ff7a26; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17121a; --fg:#efe8f2; --muted:#b3a7b9; --line:#352b3a; --purple:#c58bd8; --orange:#ff7a26; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+header{display:flex;flex-direction:column;gap:12px}
+h1{font:400 clamp(2.4rem,7vw,3.4rem)/1 var(--display);color:var(--purple);margin:0;letter-spacing:.01em;text-wrap:balance}
+.meta{color:var(--muted);margin:0}
+nav{display:flex;flex-wrap:wrap;gap:10px}
+nav a{background:var(--purple);color:var(--bg);text-decoration:none;padding:6px 14px;border-radius:999px;font-weight:500}
+nav a:focus-visible,a:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+section{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--line);padding-top:28px;scroll-margin-top:16px}
+.eyebrow{font:600 .78rem/1 var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--orange)}
+h2{font:400 2.1rem/1.1 var(--display);color:var(--purple);margin:0 0 8px}
+h3{font:600 1.05rem/1.3 var(--body);margin:20px 0 2px}
+p,li{margin:0;color:var(--fg)}
+ul{margin:4px 0 0;padding-left:1.25em;display:flex;flex-direction:column;gap:4px}
+a{color:var(--purple)}
+footer{color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Daily Games Bot</h1>
+  <p class="meta">Effective November 11, 2026 · Operated by Smidgen Games LLC</p>
+  <nav><a href="terms.html">Terms of Service</a></nav>
+</header>
+<section id="privacy">
+  <span class="eyebrow">Privacy Policy</span>
+  <h2>What the bot keeps, and for how long</h2>
+  <p>Daily Games Bot (“the bot”) is a Discord bot that reads daily puzzle results people paste into a channel and turns them into leaderboards. This policy explains what it collects and how it is used.</p>
+
+  <h3>What we collect</h3>
+  <ul>
+    <li>Your Discord user ID and display name, when you post a recognized game result.</li>
+    <li>The score details from that result (game name, puzzle number, score) plus the server channel ID, message ID, and the date it was posted.</li>
+    <li>For games added with <code>/addgame</code>: the game name, the text pattern used to recognize it, scoring settings, and the user ID of the person who added it.</li>
+  </ul>
+
+  <h3>What we don't collect</h3>
+  <ul>
+    <li>The bot reads messages in channels it can see in order to spot game results, but it does not store the text of any message. Messages that aren't recognized game results are ignored.</li>
+    <li>No email addresses, IP addresses, payment details, voice data, or direct messages.</li>
+  </ul>
+
+  <h3>How it's used</h3>
+  <p>Only to show leaderboards, daily recaps, and weekly standings in the same channel where the scores were posted. Data from one channel is never shown in another channel or server. We don't sell, rent, or share this data, and we don't use it for advertising.</p>
+
+  <h3>How long we keep it</h3>
+  <p>Scores are deleted automatically after 7 days. Added games stay until someone removes them with <code>/removegame</code> or the bot is removed from the server.</p>
+
+  <h3>Where it's stored</h3>
+  <p>In a database on a server hosted by Fly.io in the United States. Discord also processes messages under its own <a href="https://discord.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+
+  <h3>Your choices</h3>
+  <ul>
+    <li>Don't want your scores tracked? Don't post results in channels where the bot is active, or delete your post.</li>
+    <li>Server admins can remove the bot or limit which channels it can see at any time.</li>
+    <li>To ask for your data to be deleted sooner, contact us through <a href="https://playsmidgen.com" target="_blank" rel="noopener">playsmidgen.com</a> with your Discord username.</li>
+  </ul>
+
+  <h3>Children</h3>
+  <p>The bot is meant for people who meet Discord's minimum age requirement. We don't knowingly collect data from anyone younger.</p>
+
+  <h3>Changes</h3>
+  <p>If this policy changes, we'll update the date at the top of this page.</p>
+</section>
+<footer>Questions? Reach Smidgen Games LLC at <a href="https://playsmidgen.com" target="_blank" rel="noopener">playsmidgen.com</a>.</footer>
+</div>
+</body>
+</html>
