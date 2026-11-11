@@ -54,8 +54,18 @@ def make_embed(guild_id: int, day: str, title: str, blocks=None):
     e = discord.Embed(title=title, color=0x753189)
     if not blocks:
         e.description = "No scores posted yet."
-    for name, text in blocks[:25]:
-        e.add_field(name=name, value=text[:1024], inline=False)
+    fields = []
+    for name, text in blocks:
+        # Discord caps a field at 1024 characters; continue long lists in another field.
+        chunk, part = "", 0
+        for line in text.split("\n"):
+            if len(chunk) + len(line) + 1 > 1024:
+                fields.append((name if part == 0 else f"{name} (cont.)", chunk))
+                chunk, part = "", part + 1
+            chunk += ("\n" if chunk else "") + line
+        fields.append((name if part == 0 else f"{name} (cont.)", chunk))
+    for name, value in fields[:25]:
+        e.add_field(name=name, value=value, inline=False)
     return e
 
 

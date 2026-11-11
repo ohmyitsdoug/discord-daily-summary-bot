@@ -4,7 +4,7 @@ from collections import defaultdict
 MEDALS = {1: "🥇", 2: "🥈", 3: "🥉"}
 
 
-def build(rows, max_per_game=15):
+def build(rows, max_per_game=None):
     """Returns [(game_title, text)] with tied scores sharing a rank."""
     by_game = defaultdict(list)
     for r in rows:
@@ -18,7 +18,7 @@ def build(rows, max_per_game=15):
         for i, e in enumerate(entries, 1):
             if e["score"] != prev:
                 rank, prev = i, e["score"]
-            if i > max_per_game:
+            if max_per_game and i > max_per_game:
                 lines.append(f"…and {len(entries) - max_per_game} more")
                 break
             lines.append(f"{MEDALS.get(rank, f'`{rank}.`')} **{e['user_name']}** — {e['display']}")
@@ -27,7 +27,7 @@ def build(rows, max_per_game=15):
     return blocks
 
 
-def build_week(rows, max_per_game=15):
+def build_week(rows, max_per_game=None):
     """Per game: ranked by average score over the week, with days played and daily wins."""
     by_game = defaultdict(list)
     for r in rows:
@@ -58,7 +58,7 @@ def build_week(rows, max_per_game=15):
 
         lines = []
         for i, (uid, avg, n) in enumerate(stats, 1):
-            if i > max_per_game:
+            if max_per_game and i > max_per_game:
                 lines.append(f"…and {len(stats) - max_per_game} more")
                 break
             avg_s = f"{avg:,.0f}" if avg >= 100 else f"{avg:.1f}"
