@@ -1,6 +1,8 @@
 """SQLite storage. Scores and added games are scoped per server (the `channel_id`
 column holds the server ID), so servers never see each other's data."""
 import sqlite3
+from collections import Counter
+from datetime import date
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS scores (
@@ -44,19 +46,56 @@ class DB:
         self.c = sqlite3.connect(path)
         self.c.row_factory = sqlite3.Row
         self.c.executescript(SCHEMA)
+        # posted_day = the Pacific date a score was posted (added later; older rows copy `day`).
+        cols = [r[1] for r in self.c.execute("PRAGMA table_info(scores)")]
+        if "posted_day" not in cols:
+            self.c.execute("ALTER TABLE scores ADD COLUMN posted_day TEXT")
+            self.c.execute("UPDATE scores SET posted_day = day")
+            self.c.commit()
 
     # --- scores ---
     def save(self, channel_id, r, user_id, user_name, day, message_id):
+        """Save one score. `day` is the Pacific date it was posted.
+
+        Re-posts and edits update the score but keep when it was first posted.
+        For games with puzzle numbers, the day shown on leaderboards comes from
+        the number itself (see _settle_days), so a puzzle posted just after
+        midnight Eastern still lands on the same day as everyone else's.
+        """
         puzzle = str(r.puzzle) if r.puzzle is not None else day
-        # Re-posts/edits update the score but keep the original day.
         self.c.execute("""
-            INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?,?)
+            INSERT INTO scores (channel_id, game, puzzle, user_id, user_name, score, display,
+                                higher, day, message_id, posted_day)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(channel_id, game, puzzle, user_id) DO UPDATE SET
               score=excluded.score, display=excluded.display,
               user_name=excluded.user_name, message_id=excluded.message_id
         """, (channel_id, r.game, puzzle, user_id, user_name, r.score, r.display,
-              int(r.higher_is_better), day, message_id))
+              int(r.higher_is_better), day, message_id, day))
+        if r.puzzle is not None:
+            self._settle_days(channel_id, r.game)
         self.c.commit()
+
+    def _settle_days(self, channel_id, game):
+        """Give every puzzle of a game the day its number belongs to.
+
+        Daily puzzles go up by one each day, so (puzzle number - date) is the same
+        for nearly every post. The most common value wins; a few early East Coast
+        or late West Coast posts can't pull a puzzle onto the wrong day. On a tie,
+        the later day wins, since early posts are the usual outlier.
+        """
+        rows = self.c.execute(
+            "SELECT puzzle, posted_day FROM scores WHERE channel_id=? AND game=?",
+            (channel_id, game)).fetchall()
+        rows = [(int(p), pd) for p, pd in rows if p.isdigit() and pd]
+        if not rows:
+            return
+        counts = Counter(p - date.fromisoformat(pd).toordinal() for p, pd in rows)
+        best = max(counts.values())
+        offset = min(o for o, n in counts.items() if n == best)
+        for p in {p for p, _ in rows}:
+            self.c.execute("UPDATE scores SET day=? WHERE channel_id=? AND game=? AND puzzle=?",
+                           (date.fromordinal(p - offset).isoformat(), channel_id, game, str(p)))
 
     def day_scores(self, channel_id, day):
         return self.c.execute(

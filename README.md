@@ -31,7 +31,7 @@ Every score and every added game is stored with its server ID, and every lookup 
 - One message can hold several games; each one is captured.
 - Only the last 7 days of scores are kept; older ones are deleted at midnight Pacific. Added games are kept.
 - One score per player, per game, per puzzle. Re-posting or editing updates the score.
-- A day is the Pacific date of the first post.
+- Each puzzle number belongs to one day, worked out from the numbers players post. Someone posting tomorrow's puzzle just after midnight Eastern still lands on tomorrow with everyone else. Games without a puzzle number use the Pacific date of the post.
 - Ties share a rank. Wordle X/6 ranks below 6/6.
 - The bot reacts 📊 to posts it captured.
 
