@@ -31,9 +31,9 @@ def parse_alphablitz(t: str):
         r"Alphablitz(?:\s+Online)?\s*#\s*(\d+).*?([\d,]+)\s*Blitz.*?⏱\s*([\d:]+).*?([\d,]+)\s*pts",
         t, re.I | re.S)
     if m:
-        pts = _n(m[4])
-        return Result("Alphablitz", int(m[1]), pts,
-                      f"{pts:,} pts  (⚡{m[2]} · ⏱{m[3]})", True)
+        blitz = _n(m[2])  # ranked by Blitz (the ⚡ number), not total points
+        return Result("Alphablitz", int(m[1]), blitz,
+                      f"⚡ {blitz:,} Blitz  (⏱{m[3]} · {m[4]} pts)", True)
 
 
 def parse_daily_banana(t: str):
