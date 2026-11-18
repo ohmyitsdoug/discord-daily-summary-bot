@@ -77,17 +77,13 @@ async def capture(msg: discord.Message, react: bool = True):
     if msg.channel.id not in db.read_channels(msg.guild.id):
         return
     results = parse(msg.guild.id, msg.content)
-    # Shared links (e.g. dialed.gg) carry the score in Discord's preview card.
-    card_results = parsers.parse_embeds(msg.embeds)
-    if not results and not card_results:
+    if not results:
         return
+    posted = pacific_day(msg.created_at)
     for r in results:
-        db.save(msg.guild.id, r, msg.author.id, msg.author.display_name,
-                pacific_day(msg.created_at), msg.id)
-    for r in card_results:
-        db.save(msg.guild.id, r, msg.author.id, msg.author.display_name,
-                pacific_day(msg.created_at), msg.id, keep_best=True)
-    results = results + card_results
+        # Dated dailies (Dialed's "Nov 18") go on the puzzle's own date, not the post's.
+        day = parsers.resolve_day(r.day_label, posted) if r.day_label else posted
+        db.save(msg.guild.id, r, msg.author.id, msg.author.display_name, day, msg.id)
     if not react:
         return len(results)
     try:
@@ -306,7 +302,7 @@ async def games(inter: discord.Interaction):
     if not await in_game_channel(inter):
         return
     custom = [g["name"] for g in db.custom_games(inter.guild_id)]
-    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle, Dialed (share the link)"
+    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle, Dialed (Color Daily)"
     if custom:
         text += "\n**Added here:** " + ", ".join(custom)
     await inter.response.send_message(text, ephemeral=True)

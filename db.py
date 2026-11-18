@@ -54,7 +54,7 @@ class DB:
             self.c.commit()
 
     # --- scores ---
-    def save(self, channel_id, r, user_id, user_name, day, message_id, keep_best=False):
+    def save(self, channel_id, r, user_id, user_name, day, message_id):
         """Save one score. `day` is the Pacific date it was posted.
 
         Re-posts and edits update the score but keep when it was first posted.
@@ -63,13 +63,6 @@ class DB:
         midnight Eastern still lands on the same day as everyone else's.
         """
         puzzle = str(r.puzzle) if r.puzzle is not None else day
-        if keep_best:
-            # Replayable games: only replace an earlier score from today with a better one.
-            row = self.c.execute(
-                "SELECT score FROM scores WHERE channel_id=? AND game=? AND puzzle=? AND user_id=?",
-                (channel_id, r.game, puzzle, user_id)).fetchone()
-            if row and (row[0] >= r.score if r.higher_is_better else row[0] <= r.score):
-                return
         self.c.execute("""
             INSERT INTO scores (channel_id, game, puzzle, user_id, user_name, score, display,
                                 higher, day, message_id, posted_day)

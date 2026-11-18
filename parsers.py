@@ -11,6 +11,7 @@ class Result:
     score: float
     display: str            # what the leaderboard shows
     higher_is_better: bool
+    day_label: Optional[str] = None  # e.g. "Nov 18" for dailies dated instead of numbered
 
 
 def _n(s: str) -> int:
@@ -50,8 +51,40 @@ def parse_wordle(t: str):
         return Result("Wordle", _n(m[1]), 7 if g == "X" else int(g), f"{g}/6", False)
 
 
-BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana, parse_wordle]
-BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana", "wordle"}
+def parse_dialed(t: str):
+    """Dialed's daily share, e.g.
+        Color Daily — Nov 18
+        44.13/50 🟩🟨🟨🟨🟨
+        https://dialed.gg/color?d=1&s=44.13&v=a
+    The daily link alone also works: its s= value is the player's score.
+    """
+    m = re.search(r"Color\s+Daily\s*[—–-]+\s*([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2})"
+                  r".*?(\d+(?:\.\d+)?)\s*/\s*50\b", t, re.I | re.S)
+    if m:
+        score = float(m[3])
+        return Result("Dialed", None, score, f"{score:g}/50", True,
+                      f"{m[1].title()} {int(m[2])}")
+    m = re.search(r"dialed\.gg/color\?\S*?\bd=1\b\S*?\bs=(\d+(?:\.\d+)?)", t, re.I)
+    if m:
+        score = float(m[1])
+        return Result("Dialed", None, score, f"{score:g}/50", True)
+
+
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def resolve_day(label: str, posted: str) -> str:
+    """'Nov 18' + the posted date (YYYY-MM-DD) -> the puzzle's date, handling New Year."""
+    import datetime as _dt
+    mon, day = label.split()
+    month = MONTHS.index(mon) + 1
+    p = _dt.date.fromisoformat(posted)
+    year = p.year + (1 if month == 1 and p.month == 12 else -1 if month == 12 and p.month == 1 else 0)
+    return _dt.date(year, month, int(day)).isoformat()
+
+
+BUILTINS = [parse_krillion, parse_alphablitz, parse_daily_banana, parse_wordle, parse_dialed]
+BUILTIN_NAMES = {"krillion", "alphablitz", "daily banana", "wordle", "dialed"}
 
 
 def parse_builtin(text: str):
@@ -64,7 +97,7 @@ def parse_builtin(text: str):
 # Line starts that begin a built-in game's result, used to split a message
 # that contains several games into one chunk per game.
 BUILTIN_HEADER = (r"Krillion\s*#|Alphablitz(?:\s+Online)?\s*#|Daily\s*Banana\s*#"
-                  r"|Wordle\s+[\d,]+\s+[1-6X]/6")
+                  r"|Wordle\s+[\d,]+\s+[1-6X]/6|Color\s+Daily\s*[—–-]")
 
 
 def parse_all(text: str, custom_games=()):
@@ -128,32 +161,3 @@ def parse_custom(text: str, game: dict):
         puzzle = int(float(nums[game["puzzle_idx"]].replace(",", "")))
     return Result(game["name"], puzzle, score, score_s, bool(game["higher_is_better"]))
 
-
-# ---------- Dialed (dialed.gg) ----------
-# Dialed has no copy/paste result. When a player shares their link in Discord,
-# Discord adds a preview card whose title carries the score, e.g.
-#   "DNX says you can't beat 44.1/50"
-# There's no puzzle number, so scores are grouped by the day they're posted.
-
-DIALED_SCORE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*/\s*50\b")
-
-
-def parse_dialed_embed(title: str, url: str = "", provider: str = ""):
-    if "dialed.gg" not in (url or "").lower() and (provider or "").lower() != "dialed":
-        return None
-    m = DIALED_SCORE_RE.search(title or "")
-    if not m:
-        return None
-    score = float(m[1])
-    return Result("Dialed", None, score, f"{score:g}/50", True)
-
-
-def parse_embeds(embeds):
-    """Scores from link preview cards attached to a message (one per game)."""
-    out = []
-    for e in embeds:
-        provider = getattr(getattr(e, "provider", None), "name", "") or ""
-        r = parse_dialed_embed(getattr(e, "title", "") or "", getattr(e, "url", "") or "", provider)
-        if r and all(x.game != r.game for x in out):
-            out.append(r)
-    return out

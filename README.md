@@ -4,7 +4,7 @@
 
 Reads pasted daily-game results in a channel and keeps a per-game leaderboard for each channel.
 
-**Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle
+**Built-in games:** Krillion, Alphablitz, Daily Banana, Wordle, Dialed
 
 ## Commands
 - `/dgs set-channel` — choose the one channel where leaderboards and the nightly recap post (needs **Manage Server**). Results posted there count too.
@@ -25,7 +25,7 @@ A recap of the previous day posts automatically at 12:00 AM Pacific in the chose
 Every score and every added game is stored with its server ID, and every lookup filters by it. One server never sees another server's data.
 
 ## Rules
-- **Dialed (dialed.gg):** there's no result to paste, so just share your Dialed link. Discord's preview card shows your score (e.g. "44.1/50") and the bot reads it from there. Dialed has no puzzle number, so scores are grouped by the day they're posted, and only your best score of the day counts.
+- **Dialed (dialed.gg):** paste the Color Daily share ("Color Daily — Nov 18" / "44.13/50" / link). The score goes on the date in the share, so late or early posts land on the right day. The daily link alone also works, since it carries the score. Challenge links and Discord's preview card are ignored, because the card shows the high score, not yours.
 - Each server has one post channel (`set-channel`) and any number of channels it reads results from (`watch`). All of them feed one leaderboard for the server.
 - The bot only posts in the post channel. In watched channels it just adds a 📊 reaction to results it captures. Leaderboard commands used elsewhere point people to the post channel.
 - When a channel is chosen or watched (and whenever the bot restarts), it reads back through today's messages in it and adds any results it finds, without reacting to them.
