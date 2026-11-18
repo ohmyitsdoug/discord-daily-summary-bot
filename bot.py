@@ -77,11 +77,17 @@ async def capture(msg: discord.Message, react: bool = True):
     if msg.channel.id not in db.read_channels(msg.guild.id):
         return
     results = parse(msg.guild.id, msg.content)
-    if not results:
+    # Shared links (e.g. dialed.gg) carry the score in Discord's preview card.
+    card_results = parsers.parse_embeds(msg.embeds)
+    if not results and not card_results:
         return
     for r in results:
         db.save(msg.guild.id, r, msg.author.id, msg.author.display_name,
                 pacific_day(msg.created_at), msg.id)
+    for r in card_results:
+        db.save(msg.guild.id, r, msg.author.id, msg.author.display_name,
+                pacific_day(msg.created_at), msg.id, keep_best=True)
+    results = results + card_results
     if not react:
         return len(results)
     try:
@@ -132,8 +138,19 @@ async def on_message(msg):
 
 
 @client.event
-async def on_message_edit(_before, after):
-    await capture(after)
+async def on_raw_message_edit(payload):
+    # Fires for edits AND when Discord attaches a link preview a moment after posting,
+    # even if the message isn't in the bot's cache.
+    if not payload.guild_id:
+        return
+    ch = client.get_channel(payload.channel_id)
+    if ch is None or ch.id not in db.read_channels(payload.guild_id):
+        return
+    try:
+        msg = await ch.fetch_message(payload.message_id)
+    except discord.HTTPException:
+        return
+    await capture(msg)
 
 
 # ---------- Slash commands ----------
@@ -289,7 +306,7 @@ async def games(inter: discord.Interaction):
     if not await in_game_channel(inter):
         return
     custom = [g["name"] for g in db.custom_games(inter.guild_id)]
-    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle"
+    text = "**Built in:** Krillion, Alphablitz, Daily Banana, Wordle, Dialed (share the link)"
     if custom:
         text += "\n**Added here:** " + ", ".join(custom)
     await inter.response.send_message(text, ephemeral=True)

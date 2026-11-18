@@ -127,3 +127,33 @@ def parse_custom(text: str, game: dict):
     if game["puzzle_idx"] is not None:
         puzzle = int(float(nums[game["puzzle_idx"]].replace(",", "")))
     return Result(game["name"], puzzle, score, score_s, bool(game["higher_is_better"]))
+
+
+# ---------- Dialed (dialed.gg) ----------
+# Dialed has no copy/paste result. When a player shares their link in Discord,
+# Discord adds a preview card whose title carries the score, e.g.
+#   "DNX says you can't beat 44.1/50"
+# There's no puzzle number, so scores are grouped by the day they're posted.
+
+DIALED_SCORE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*/\s*50\b")
+
+
+def parse_dialed_embed(title: str, url: str = "", provider: str = ""):
+    if "dialed.gg" not in (url or "").lower() and (provider or "").lower() != "dialed":
+        return None
+    m = DIALED_SCORE_RE.search(title or "")
+    if not m:
+        return None
+    score = float(m[1])
+    return Result("Dialed", None, score, f"{score:g}/50", True)
+
+
+def parse_embeds(embeds):
+    """Scores from link preview cards attached to a message (one per game)."""
+    out = []
+    for e in embeds:
+        provider = getattr(getattr(e, "provider", None), "name", "") or ""
+        r = parse_dialed_embed(getattr(e, "title", "") or "", getattr(e, "url", "") or "", provider)
+        if r and all(x.game != r.game for x in out):
+            out.append(r)
+    return out
